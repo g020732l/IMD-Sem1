@@ -8,30 +8,31 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] float mf_MoveSpeed;
+    [SerializeField] float mf_BaseMoveSpeed;
+    [SerializeField] float mf_CrouchSpeed;
+    float mf_MoveSpeed;
     [SerializeField] float mf_JumpForce;
     [SerializeField] AnimationCurve m_AnimationCurve;
-
     [SerializeField] PlayerInput m_PlayerInput;
     Coroutine c_RMove;
     bool mb_InMoveActive;
     float mf_axis;
 
+    [Header("Collision checks")]
+    [SerializeField] Transform m_GroundCastPosition;
+    [SerializeField] float mf_CircleRadius;
+    bool isGrounded;
+
     [SerializeField] GameObject m_Head;
-    //[SerializeField] Collider2D m_HeadCollider;
+    [SerializeField] Collider2D m_HeadTrigger;
     Coroutine c_RCrouch;
     bool mb_InCrouchActive;
     bool isUnderGeometry;
     bool waitingToUncrouch;
 
-    [Header("Collision checks")]
-    [SerializeField] Transform m_GroundCastPosition;
-    [SerializeField] float mf_CircleRadius;
-    //[SerializeField] Transform m_HeadCastPosition;
-    //[SerializeField] Vector2 mf_BoxRadius;
-    [SerializeField] LayerMask m_LayerMask;
-    bool isGrounded;    
-    
+    [SerializeField] LayerMask m_LayerMask;       
+
+
     Rigidbody2D m_rb;
     
 
@@ -50,6 +51,8 @@ public class PlayerController : MonoBehaviour
 
         m_PlayerInput.actions.FindAction("Crouch").performed += Handle_CrouchPerformed;
         m_PlayerInput.actions.FindAction("Crouch").canceled += Handle_CrouchCancelled;
+
+        mf_MoveSpeed = mf_BaseMoveSpeed;
     }
 
     void FixedUpdate()
@@ -76,15 +79,34 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        
+        isUnderGeometry = true;
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        //Debug.Log("Trigger has been exited!");
+        isUnderGeometry = false;
+
+        if (waitingToUncrouch && !m_Head.activeSelf)
+        {
+            //Debug.Log("Trigger exit has caused uncrouch!");
+            waitingToUncrouch = false;
+            m_Head.SetActive(true);
+            mf_MoveSpeed = mf_BaseMoveSpeed;
+            if (c_RCrouch !=  null)
+            {
+                StopCoroutine(c_RCrouch);
+                c_RCrouch = null;
+            }
+        }
     }
 
     public void PlayerJump(InputAction.CallbackContext context)
     {
-        Debug.Log("Jump pressed");
+        //Debug.Log("Jump pressed");
         if (isGrounded && !mb_InCrouchActive)
         {
-            Debug.Log("Jump Succeeded");
+            //Debug.Log("Jump Succeeded");
             m_rb.AddForce(Vector2.up * mf_JumpForce);
         }
     }
@@ -112,24 +134,27 @@ public class PlayerController : MonoBehaviour
     void Handle_CrouchPerformed(InputAction.CallbackContext context)
     {
         mb_InCrouchActive = true;
-        m_Head.SetActive(false);
         if (c_RCrouch == null)
         {
+            mf_MoveSpeed = mf_CrouchSpeed;
+            m_Head.SetActive(false);
             c_RCrouch = StartCoroutine(C_CrouchUpdate());
         }
     }
     void Handle_CrouchCancelled(InputAction.CallbackContext context)
     {
-        mb_InCrouchActive = false;
-        m_Head.SetActive(true);
+        mb_InCrouchActive = false;        
         if (c_RCrouch != null && !isUnderGeometry)
         {
+            mf_MoveSpeed = mf_BaseMoveSpeed;
             StopCoroutine(c_RCrouch);
             c_RCrouch = null;
+            m_Head.SetActive(true);
         }
         else if (isUnderGeometry)
         {
-
+            //Debug.Log("Uncrouched whilst under geometry!");
+            waitingToUncrouch = true;
         }
     }
 
@@ -137,7 +162,7 @@ public class PlayerController : MonoBehaviour
     {
         while (mb_InMoveActive)
         {
-            Debug.Log($"Move input = {mf_axis}");
+            //Debug.Log($"Move input = {mf_axis}");
             yield return new WaitForFixedUpdate();
         }
     }
@@ -146,7 +171,7 @@ public class PlayerController : MonoBehaviour
     {
         while (mb_InCrouchActive)
         {
-            Debug.Log("Crouching Active");
+            //Debug.Log("Crouching Active");
             yield return new WaitForFixedUpdate();
         }
     }
