@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,8 +16,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] AnimationCurve m_AnimationCurve;
     [SerializeField] PlayerInput m_PlayerInput;
     Coroutine c_RMove;
+    Coroutine c_RJumpBuffer;
     bool mb_InMoveActive;
+    bool jumpBuffered;
     float mf_axis;
+
 
     [Header("Collision checks")]
     [SerializeField] Transform m_GroundCastPosition;
@@ -58,9 +62,17 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         isGrounded = Physics2D.CircleCast(m_GroundCastPosition.position, mf_CircleRadius, Vector2.zero, 0, m_LayerMask);
-        //isUnderGeometry = Physics2D.BoxCast(m_HeadCastPosition.position, mf_BoxRadius, 0, m_LayerMask);
 
         m_rb.velocity = new Vector2(mf_axis * mf_MoveSpeed, m_rb.velocity.y);
+
+        //Physics.IgnoreLayerCollision(5, 7, (m_rb.velocity.y > 0.0f));
+
+        if (jumpBuffered && isGrounded && !mb_InCrouchActive)
+        {
+            m_rb.AddForce(Vector2.up * mf_JumpForce);
+            StopCoroutine(C_JumpBuffer());
+            c_RJumpBuffer = null;
+        }
     }
 
     private void OnDrawGizmos()
@@ -108,6 +120,19 @@ public class PlayerController : MonoBehaviour
         {
             //Debug.Log("Jump Succeeded");
             m_rb.AddForce(Vector2.up * mf_JumpForce);
+        }
+        else if (!isGrounded || mb_InCrouchActive)
+        {
+            if (c_RJumpBuffer != null)
+            {
+                c_RJumpBuffer = StartCoroutine(C_JumpBuffer());
+            }
+            else
+            {
+                StopCoroutine(C_JumpBuffer());
+                c_RJumpBuffer = null;
+                c_RJumpBuffer = StartCoroutine(C_JumpBuffer());
+            }
         }
     }
 
@@ -174,6 +199,15 @@ public class PlayerController : MonoBehaviour
             //Debug.Log("Crouching Active");
             yield return new WaitForFixedUpdate();
         }
+    }
+
+    IEnumerator C_JumpBuffer()
+    {
+        Debug.Log("Jump is buffered");
+        jumpBuffered = true;
+        yield return new WaitForSeconds(0.25f);
+        jumpBuffered = false;
+        yield break;
     }
 
     //public void PlayerMove(InputAction.CallbackContext context)
