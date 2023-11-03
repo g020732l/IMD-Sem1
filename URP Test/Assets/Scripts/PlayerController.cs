@@ -11,15 +11,22 @@ public class PlayerController : MonoBehaviour
     [Header("Movement")]
     [SerializeField] float mf_BaseMoveSpeed;
     [SerializeField] float mf_CrouchSpeed;
+    //[SerializeField] AnimationCurve m_AnimationCurve;
     float mf_MoveSpeed;
+    
     [SerializeField] float mf_JumpForce;
-    [SerializeField] AnimationCurve m_AnimationCurve;
+    [SerializeField] float mf_JumpBufferTime;
+    [SerializeField] float mf_CoyoteTime;
+    
     [SerializeField] PlayerInput m_PlayerInput;
+    [SerializeField] PlayerSemisolidPlatform m_PlatformController;
+    [SerializeField] PlayerStickyCrouch m_StickyCrouch;
+
     Coroutine c_RMove;
-    Coroutine c_RJumpBuffer;
+    Coroutine c_RJumpBuffer;    
     bool mb_InMoveActive;
     bool jumpBuffered;
-    float mf_axis;
+    float mf_axis;    
 
 
     [Header("Collision checks")]
@@ -29,15 +36,15 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] GameObject m_Head;
     [SerializeField] Collider2D m_HeadTrigger;
+
     Coroutine c_RCrouch;
-    bool mb_InCrouchActive;
+    bool isCrouching;
     bool isUnderGeometry;
     bool waitingToUncrouch;
 
-    [SerializeField] LayerMask m_LayerMask;       
-
-
+    [SerializeField] LayerMask m_LayerMask; 
     Rigidbody2D m_rb;
+
     
 
     private void Awake()
@@ -61,13 +68,14 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        isGrounded = Physics2D.CircleCast(m_GroundCastPosition.position, mf_CircleRadius, Vector2.zero, 0, m_LayerMask);
+        //isGrounded = Physics2D.CircleCast(m_GroundCastPosition.position, mf_CircleRadius, Vector2.zero, 0, m_LayerMask);
+        //isGrounded = Physics2D.BoxCast(m_GroundCastPosition.position, new Vector2(mf_CircleRadius, mf_CircleRadius), 0.0f, Vector2.zero, 0.0f, m_LayerMask);
 
         m_rb.velocity = new Vector2(mf_axis * mf_MoveSpeed, m_rb.velocity.y);
 
         //Physics.IgnoreLayerCollision(5, 7, (m_rb.velocity.y > 0.0f));
 
-        if (jumpBuffered && isGrounded && !mb_InCrouchActive)
+        if (jumpBuffered && isGrounded && !isCrouching)
         {
             m_rb.AddForce(Vector2.up * mf_JumpForce);
             StopCoroutine(C_JumpBuffer());
@@ -80,12 +88,14 @@ public class PlayerController : MonoBehaviour
         if (isGrounded)
         {
             Gizmos.color = Color.yellow;
-            Gizmos.DrawSphere(m_GroundCastPosition.position, mf_CircleRadius);
+            //Gizmos.DrawSphere(m_GroundCastPosition.position, mf_CircleRadius);
+            //Gizmos.DrawCube(m_GroundCastPosition.position, new Vector3(mf_CircleRadius, mf_CircleRadius, mf_CircleRadius));
         }
         else
         {
-            Gizmos.color= Color.red;
-            Gizmos.DrawSphere(m_GroundCastPosition.position, mf_CircleRadius);
+            Gizmos.color = Color.red;
+            //Gizmos.DrawSphere(m_GroundCastPosition.position, mf_CircleRadius);
+            //Gizmos.DrawCube(m_GroundCastPosition.position, new Vector3(mf_CircleRadius, mf_CircleRadius, mf_CircleRadius));
         }
     }
 
@@ -116,12 +126,17 @@ public class PlayerController : MonoBehaviour
     public void PlayerJump(InputAction.CallbackContext context)
     {
         //Debug.Log("Jump pressed");
-        if (isGrounded && !mb_InCrouchActive)
+        if (isGrounded && !isCrouching)
         {
             //Debug.Log("Jump Succeeded");
             m_rb.AddForce(Vector2.up * mf_JumpForce);
         }
-        else if (!isGrounded || mb_InCrouchActive)
+        else if (isGrounded && isCrouching)
+        {
+            Debug.Log("Crouch jumped");
+            m_PlatformController.PlayerCrouchJumped();
+        }
+        else if (!isGrounded || isCrouching)
         {
             if (c_RJumpBuffer != null)
             {
@@ -158,7 +173,9 @@ public class PlayerController : MonoBehaviour
 
     void Handle_CrouchPerformed(InputAction.CallbackContext context)
     {
-        mb_InCrouchActive = true;
+        isCrouching = true;
+        m_StickyCrouch.UpdateCrouching(isCrouching);
+
         if (c_RCrouch == null)
         {
             mf_MoveSpeed = mf_CrouchSpeed;
@@ -168,7 +185,9 @@ public class PlayerController : MonoBehaviour
     }
     void Handle_CrouchCancelled(InputAction.CallbackContext context)
     {
-        mb_InCrouchActive = false;        
+        isCrouching = false;
+        m_StickyCrouch.UpdateCrouching(isCrouching);
+
         if (c_RCrouch != null && !isUnderGeometry)
         {
             mf_MoveSpeed = mf_BaseMoveSpeed;
@@ -194,7 +213,7 @@ public class PlayerController : MonoBehaviour
 
     IEnumerator C_CrouchUpdate()
     {
-        while (mb_InCrouchActive)
+        while (isCrouching)
         {
             //Debug.Log("Crouching Active");
             yield return new WaitForFixedUpdate();
@@ -205,13 +224,8 @@ public class PlayerController : MonoBehaviour
     {
         Debug.Log("Jump is buffered");
         jumpBuffered = true;
-        yield return new WaitForSeconds(0.25f);
+        yield return new WaitForSeconds(mf_JumpBufferTime);
         jumpBuffered = false;
         yield break;
     }
-
-    //public void PlayerMove(InputAction.CallbackContext context)
-    //{
-    //    mf_axis = context.ReadValue<float>();
-    //}
 }
