@@ -16,22 +16,29 @@ public class PlayerController : MonoBehaviour
     
     [SerializeField] float mf_JumpForce;
     [SerializeField] float mf_JumpBufferTime;
+    [SerializeField] float mf_JumpAcceleration;
+    [SerializeField] float mf_JumpStart;
+    [SerializeField] float mf_JumpMax;
     [SerializeField] float mf_CoyoteTime;
     
     [SerializeField] PlayerInput m_PlayerInput;
-    [SerializeField] PlayerSemisolidPlatform m_PlatformController;
-    [SerializeField] PlayerStickyCrouch m_StickyCrouch;
-
     Coroutine c_RMove;
-    Coroutine c_RJumpBuffer;    
+    Coroutine c_RJumpBuffer;
     bool mb_InMoveActive;
     bool jumpBuffered;
-    float mf_axis;    
+    float mf_Axis;
 
+    [SerializeField] PlayerSemisolidPlatform m_PlatformController;
+    Coroutine c_RUncrouchDowntime;
+    float mf_UncrouchDowntime;
+
+    [SerializeField] PlayerStickyCrouch m_StickyCrouch;
 
     [Header("Collision checks")]
     [SerializeField] Transform m_GroundCastPosition;
-    [SerializeField] float mf_CircleRadius;
+    //[SerializeField] float mf_CircleRadius;
+    [SerializeField] float mf_BoxWidth;
+    [SerializeField] float mf_BoxHeight;
     bool isGrounded;
 
     [SerializeField] GameObject m_Head;
@@ -39,6 +46,7 @@ public class PlayerController : MonoBehaviour
 
     Coroutine c_RCrouch;
     bool isCrouching;
+    bool forcedCrouch;
     bool isUnderGeometry;
     bool waitingToUncrouch;
 
@@ -69,14 +77,15 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         //isGrounded = Physics2D.CircleCast(m_GroundCastPosition.position, mf_CircleRadius, Vector2.zero, 0, m_LayerMask);
-        //isGrounded = Physics2D.BoxCast(m_GroundCastPosition.position, new Vector2(mf_CircleRadius, mf_CircleRadius), 0.0f, Vector2.zero, 0.0f, m_LayerMask);
+        isGrounded = Physics2D.BoxCast(m_GroundCastPosition.position, new Vector2(mf_BoxWidth, mf_BoxHeight), 0.0f, Vector2.zero, 0.0f, m_LayerMask);
 
-        m_rb.velocity = new Vector2(mf_axis * mf_MoveSpeed, m_rb.velocity.y);
+        m_rb.velocity = new Vector2(mf_Axis * mf_MoveSpeed, m_rb.velocity.y);
 
         //Physics.IgnoreLayerCollision(5, 7, (m_rb.velocity.y > 0.0f));
 
         if (jumpBuffered && isGrounded && !isCrouching)
         {
+            m_rb.velocity = Vector2.zero;
             m_rb.AddForce(Vector2.up * mf_JumpForce);
             StopCoroutine(C_JumpBuffer());
             c_RJumpBuffer = null;
@@ -89,13 +98,13 @@ public class PlayerController : MonoBehaviour
         {
             Gizmos.color = Color.yellow;
             //Gizmos.DrawSphere(m_GroundCastPosition.position, mf_CircleRadius);
-            //Gizmos.DrawCube(m_GroundCastPosition.position, new Vector3(mf_CircleRadius, mf_CircleRadius, mf_CircleRadius));
+            Gizmos.DrawCube(m_GroundCastPosition.position, new Vector3(mf_BoxWidth, mf_BoxHeight, mf_BoxWidth));
         }
         else
         {
             Gizmos.color = Color.red;
             //Gizmos.DrawSphere(m_GroundCastPosition.position, mf_CircleRadius);
-            //Gizmos.DrawCube(m_GroundCastPosition.position, new Vector3(mf_CircleRadius, mf_CircleRadius, mf_CircleRadius));
+            Gizmos.DrawCube(m_GroundCastPosition.position, new Vector3(mf_BoxWidth, mf_BoxHeight, mf_BoxWidth));
         }
     }
 
@@ -109,7 +118,7 @@ public class PlayerController : MonoBehaviour
         //Debug.Log("Trigger has been exited!");
         isUnderGeometry = false;
 
-        if (waitingToUncrouch && !m_Head.activeSelf)
+        if (waitingToUncrouch && !forcedCrouch && !m_Head.activeSelf)
         {
             //Debug.Log("Trigger exit has caused uncrouch!");
             waitingToUncrouch = false;
@@ -123,12 +132,24 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /*public void ForceGrounded(bool groundedState)
+    {
+        isGrounded = groundedState;
+    }*/
+
+    public void ForceCrouch(float crouchTime)
+    {
+        mf_UncrouchDowntime = crouchTime;
+        c_RUncrouchDowntime = StartCoroutine(C_UncrouchDowntime());
+    }
+
     public void PlayerJump(InputAction.CallbackContext context)
     {
         //Debug.Log("Jump pressed");
         if (isGrounded && !isCrouching)
         {
             //Debug.Log("Jump Succeeded");
+            m_rb.velocity = Vector2.zero;
             m_rb.AddForce(Vector2.up * mf_JumpForce);
         }
         else if (isGrounded && isCrouching)
@@ -153,7 +174,7 @@ public class PlayerController : MonoBehaviour
 
     void Handle_MovePerformed(InputAction.CallbackContext context)
     {
-        mf_axis = context.ReadValue<float>();
+        mf_Axis = context.ReadValue<float>();
         mb_InMoveActive = true;
         if (c_RMove == null)
         {
@@ -162,7 +183,7 @@ public class PlayerController : MonoBehaviour
     }
     void Handle_MoveCancelled(InputAction.CallbackContext context)
     {
-        mf_axis = context.ReadValue<float>();
+        mf_Axis = context.ReadValue<float>();
         mb_InMoveActive = false;
         if (c_RMove != null)
         {
@@ -174,7 +195,7 @@ public class PlayerController : MonoBehaviour
     void Handle_CrouchPerformed(InputAction.CallbackContext context)
     {
         isCrouching = true;
-        m_StickyCrouch.UpdateCrouching(isCrouching);
+        //m_StickyCrouch.UpdateCrouching(isCrouching);
 
         if (c_RCrouch == null)
         {
@@ -183,22 +204,45 @@ public class PlayerController : MonoBehaviour
             c_RCrouch = StartCoroutine(C_CrouchUpdate());
         }
     }
+
+    //TODO: Remove all this forced crouch nonsense, add a script to playerhead that disables collision whilst falling
     void Handle_CrouchCancelled(InputAction.CallbackContext context)
     {
-        isCrouching = false;
-        m_StickyCrouch.UpdateCrouching(isCrouching);
+        if (!forcedCrouch)
+        {
+            isCrouching = false;
+            //m_StickyCrouch.UpdateCrouching(isCrouching);
+            Debug.Log("uncrouching");
 
-        if (c_RCrouch != null && !isUnderGeometry)
-        {
-            mf_MoveSpeed = mf_BaseMoveSpeed;
-            StopCoroutine(c_RCrouch);
-            c_RCrouch = null;
-            m_Head.SetActive(true);
+            if (c_RCrouch != null && !isUnderGeometry && !forcedCrouch)
+            {
+                Debug.Log("succesfully uncrouched");
+                mf_MoveSpeed = mf_BaseMoveSpeed;
+                StopCoroutine(c_RCrouch);
+                c_RCrouch = null;
+                m_Head.SetActive(true);
+            }
+            else if (isUnderGeometry)
+            {
+                Debug.Log("Uncrouched whilst under geometry!");
+                waitingToUncrouch = true;
+            }
         }
-        else if (isUnderGeometry)
+        else
         {
-            //Debug.Log("Uncrouched whilst under geometry!");
-            waitingToUncrouch = true;
+            if (c_RCrouch != null && !isUnderGeometry)
+            {
+                Debug.Log("succesfully uncrouched");
+                mf_MoveSpeed = mf_BaseMoveSpeed;
+                StopCoroutine(c_RCrouch);
+                c_RCrouch = null;
+                m_Head.SetActive(true);
+            }
+            else if (isUnderGeometry)
+            {
+                Debug.Log("Uncrouched whilst under geometry!");
+                waitingToUncrouch = true;
+            }
         }
     }
 
@@ -227,5 +271,24 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(mf_JumpBufferTime);
         jumpBuffered = false;
         yield break;
+    }
+
+    IEnumerator C_UncrouchDowntime()
+    {
+        forcedCrouch = true;
+        Debug.Log("UncrouchDowntime active");
+        yield return new WaitForSeconds(mf_UncrouchDowntime);
+        forcedCrouch = false;
+        if (!forcedCrouch && !waitingToUncrouch && !m_Head.activeSelf)
+        {            
+            m_Head.SetActive(true);
+            mf_MoveSpeed = mf_BaseMoveSpeed;
+
+            if (c_RCrouch != null)
+            {
+                StopCoroutine(c_RCrouch);
+                c_RCrouch = null;
+            }
+        }
     }
 }

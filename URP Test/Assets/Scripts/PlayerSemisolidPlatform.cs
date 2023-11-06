@@ -6,7 +6,7 @@ public class PlayerSemisolidPlatform : MonoBehaviour
 {
     private GameObject currentPlatform;
     [SerializeField] private BoxCollider2D playerCollider;
-    //[SerializeField] private PlayerController playerController;
+    [SerializeField] private PlayerController playerController;
     [SerializeField] private float collisionDowntime = 0.2f;
     Coroutine c_RDropThroughPlat;
 
@@ -48,6 +48,8 @@ public class PlayerSemisolidPlatform : MonoBehaviour
 
                 c_RDropThroughPlat = StartCoroutine(DisableCollision());
             }
+
+            playerController.ForceCrouch(collisionDowntime);
         }
     }
 

@@ -342,7 +342,7 @@ BoxCollider2D:
   m_GameObject: {fileID: 251824258}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 03029bd0176f55a468de38fe1a2b8429, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -761,7 +761,7 @@ BoxCollider2D:
   m_GameObject: {fileID: 456059290}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 03029bd0176f55a468de38fe1a2b8429, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -879,7 +879,7 @@ PlatformEffector2D:
   m_RotationalOffset: 0
   m_UseOneWay: 1
   m_UseOneWayGrouping: 0
-  m_SurfaceArc: 180
+  m_SurfaceArc: 179
   m_UseSideFriction: 0
   m_UseSideBounce: 0
   m_SideArc: 1
@@ -1157,7 +1157,7 @@ BoxCollider2D:
   m_GameObject: {fileID: 694586425}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 03029bd0176f55a468de38fe1a2b8429, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1315,7 +1315,7 @@ BoxCollider2D:
   m_GameObject: {fileID: 1231515102}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 03029bd0176f55a468de38fe1a2b8429, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1445,7 +1445,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1425442347}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.02, z: 0}
+  m_LocalPosition: {x: 0, y: -0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1498,7 +1498,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.25, y: -0.25}
+  m_Offset: {x: 0.25, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1509,7 +1509,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.5, y: 0.5}
+  m_Size: {x: 0.5, y: 0.035}
   m_EdgeRadius: 0
 --- !u!61 &1425442351
 BoxCollider2D:
@@ -1543,7 +1543,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.25, y: -0.25}
+  m_Offset: {x: -0.25, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1554,7 +1554,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.5, y: 0.5}
+  m_Size: {x: 0.5, y: 0.035}
   m_EdgeRadius: 0
 --- !u!1 &1696016503
 GameObject:
@@ -1654,6 +1654,7 @@ GameObject:
   - component: {fileID: 2013807360}
   - component: {fileID: 2013807362}
   - component: {fileID: 2013807359}
+  - component: {fileID: 2013807363}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1676,7 +1677,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 2
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -1858,14 +1859,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mf_BaseMoveSpeed: 5
   mf_CrouchSpeed: 3
-  mf_JumpForce: 350
+  mf_JumpForce: 450
   mf_JumpBufferTime: 0.15
+  mf_JumpAcceleration: 0
+  mf_JumpStart: 0
+  mf_JumpMax: 0
   mf_CoyoteTime: 0.15
   m_PlayerInput: {fileID: 2013807359}
   m_PlatformController: {fileID: 2013807362}
-  m_StickyCrouch: {fileID: 0}
+  m_StickyCrouch: {fileID: 2013807363}
   m_GroundCastPosition: {fileID: 1425442348}
-  mf_CircleRadius: 0.99
+  mf_BoxWidth: 1
+  mf_BoxHeight: 0.035
   m_Head: {fileID: 372420003}
   m_HeadTrigger: {fileID: 2013807361}
   m_LayerMask:
@@ -1929,4 +1934,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCollider: {fileID: 2013807356}
+  playerController: {fileID: 0}
   collisionDowntime: 0.5
+--- !u!114 &2013807363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2013807354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9055a1ae6b54e7c419dcfe55523ad204, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Trigger0: {fileID: 0}
+  m_Trigger1: {fileID: 0}
