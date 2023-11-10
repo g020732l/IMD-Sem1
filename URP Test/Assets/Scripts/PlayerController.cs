@@ -16,13 +16,20 @@ public class PlayerController : MonoBehaviour
     
     [SerializeField] float mf_JumpForce;
     [SerializeField] float mf_JumpBufferTime;
-    [SerializeField] float mf_JumpAcceleration;
-    [SerializeField] float mf_JumpStart;
-    [SerializeField] float mf_JumpMax;
-    [SerializeField] float mf_CoyoteTime;
+    [SerializeField] float mf_JumpMaxTime;
+    [SerializeField] float mf_ApexMaxTime;
+    [SerializeField] float mf_ApexDelay;
+    [SerializeField] float mf_ApexGravMod;
+    float mf_BaseGravScale;
+    [SerializeField] float mf_CoyoteTime;    
+    bool mb_JumpHeld;
+    bool mb_JumpRising;
+    bool mb_JumpApex;
+    
     
     [SerializeField] PlayerInput m_PlayerInput;
     Coroutine c_RMove;
+    Coroutine c_RJump;
     Coroutine c_RJumpBuffer;
     bool mb_InMoveActive;
     bool jumpBuffered;
@@ -63,7 +70,9 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        m_PlayerInput.actions.FindAction("Jump").performed += PlayerJump;
+        //m_PlayerInput.actions.FindAction("Jump").performed += PlayerJump;
+        m_PlayerInput.actions.FindAction("Jump").performed += Handle_JumpPerformed;
+        m_PlayerInput.actions.FindAction("Jump").canceled += Handle_JumpCancelled;
 
         m_PlayerInput.actions.FindAction("Move").performed += Handle_MovePerformed;
         m_PlayerInput.actions.FindAction("Move").canceled += Handle_MoveCancelled;
@@ -72,6 +81,7 @@ public class PlayerController : MonoBehaviour
         m_PlayerInput.actions.FindAction("Crouch").canceled += Handle_CrouchCancelled;
 
         mf_MoveSpeed = mf_BaseMoveSpeed;
+        mf_BaseGravScale = m_rb.gravityScale;
     }
 
     void FixedUpdate()
@@ -82,11 +92,24 @@ public class PlayerController : MonoBehaviour
         m_rb.velocity = new Vector2(mf_Axis * mf_MoveSpeed, m_rb.velocity.y);
 
         //Physics.IgnoreLayerCollision(5, 7, (m_rb.velocity.y > 0.0f));
+        if (mb_JumpHeld)
+        {
+            if (mb_JumpRising)
+            {
+                m_rb.velocity = new Vector2(m_rb.velocity.x, 0.0f);
+                m_rb.AddForce(Vector2.up * mf_JumpForce);
+            }
+            else if (mb_JumpApex)
+            {
+                m_rb.gravityScale *= mf_ApexGravMod;
+            }
+        }
 
         if (jumpBuffered && isGrounded && !isCrouching)
         {
-            m_rb.velocity = Vector2.zero;
-            m_rb.AddForce(Vector2.up * mf_JumpForce);
+            /*m_rb.velocity = Vector2.zero;
+            m_rb.AddForce(Vector2.up * mf_JumpForce);*/
+            StartCoroutine(C_Jumping());
             StopCoroutine(C_JumpBuffer());
             c_RJumpBuffer = null;
         }
@@ -132,18 +155,30 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void ToggleHead()
+    {
+        if (m_Head.activeSelf) 
+        {
+            m_Head.SetActive(false);
+        }
+        else
+        {
+            m_Head.SetActive(true);
+        }
+    }
+
     /*public void ForceGrounded(bool groundedState)
     {
         isGrounded = groundedState;
     }*/
 
-    public void ForceCrouch(float crouchTime)
+    /*public void ForceCrouch(float crouchTime)
     {
         mf_UncrouchDowntime = crouchTime;
         c_RUncrouchDowntime = StartCoroutine(C_UncrouchDowntime());
-    }
+    }*/
 
-    public void PlayerJump(InputAction.CallbackContext context)
+    /*public void PlayerJump(InputAction.CallbackContext context)
     {
         //Debug.Log("Jump pressed");
         if (isGrounded && !isCrouching)
@@ -170,6 +205,51 @@ public class PlayerController : MonoBehaviour
                 c_RJumpBuffer = StartCoroutine(C_JumpBuffer());
             }
         }
+    }*/
+
+    void Handle_JumpPerformed(InputAction.CallbackContext context)
+    {
+        mb_JumpHeld = true;
+
+        if (isGrounded && !isCrouching)
+        {
+            if (c_RJump == null)
+            {
+                c_RJump = StartCoroutine(C_Jumping());
+            }
+        }
+        else if (isGrounded && isCrouching)
+        {
+            Debug.Log("Crouch jumped");
+            m_PlatformController.PlayerCrouchJumped();
+        }
+        else if (!isGrounded || isCrouching)
+        {
+            if (c_RJumpBuffer != null)
+            {
+                c_RJumpBuffer = StartCoroutine(C_JumpBuffer());
+            }
+            else
+            {
+                StopCoroutine(C_JumpBuffer());
+                c_RJumpBuffer = null;
+                c_RJumpBuffer = StartCoroutine(C_JumpBuffer());
+            }
+        }        
+    }
+
+    void Handle_JumpCancelled(InputAction.CallbackContext context) 
+    {
+        mb_JumpHeld = false;
+        mb_JumpRising = false;
+        mb_JumpApex = false;
+        m_rb.gravityScale = mf_BaseGravScale;
+
+        if (c_RJump != null)
+        {
+            StopCoroutine(c_RJump);
+            c_RJump = null;
+        }
     }
 
     void Handle_MovePerformed(InputAction.CallbackContext context)
@@ -181,6 +261,7 @@ public class PlayerController : MonoBehaviour
             c_RMove = StartCoroutine(C_MoveUpdate());
         }
     }
+
     void Handle_MoveCancelled(InputAction.CallbackContext context)
     {
         mf_Axis = context.ReadValue<float>();
@@ -205,7 +286,8 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    //TODO: Remove all this forced crouch nonsense, add a script to playerhead that disables collision whilst falling
+    //TODO: Remove all this forced crouch nonsense, add a script to playerhead that disables collision whilst falling.
+    //NOTE: fixed player head issue, keeping the forcedCrouch code for now in case it's needed later. If not, then remove.
     void Handle_CrouchCancelled(InputAction.CallbackContext context)
     {
         if (!forcedCrouch)
@@ -244,6 +326,25 @@ public class PlayerController : MonoBehaviour
                 waitingToUncrouch = true;
             }
         }
+    }
+
+    IEnumerator C_Jumping()
+    {
+        while (mb_JumpHeld)
+        {
+            mb_JumpRising = true;
+            yield return new WaitForSeconds(mf_JumpMaxTime);
+            mb_JumpRising = false;
+
+            yield return new WaitForSeconds(mf_ApexDelay);
+
+            mb_JumpApex = true;
+            yield return new WaitForSeconds(mf_ApexMaxTime); 
+            mb_JumpApex = false;
+            m_rb.gravityScale = mf_BaseGravScale;
+            mb_JumpHeld = false;
+        }
+        yield break;
     }
 
     IEnumerator C_MoveUpdate()

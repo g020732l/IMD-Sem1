@@ -456,6 +456,7 @@ GameObject:
   - component: {fileID: 372420004}
   - component: {fileID: 372420005}
   - component: {fileID: 372420006}
+  - component: {fileID: 372420007}
   m_Layer: 0
   m_Name: PlayerHead
   m_TagString: Untagged
@@ -560,7 +561,7 @@ BoxCollider2D:
     serializedVersion: 2
     m_Bits: 4294967295
   m_IsTrigger: 0
-  m_UsedByEffector: 0
+  m_UsedByEffector: 1
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
@@ -575,6 +576,25 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!251 &372420007
+PlatformEffector2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 372420003}
+  m_Enabled: 1
+  m_UseColliderMask: 1
+  m_ColliderMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RotationalOffset: 0
+  m_UseOneWay: 1
+  m_UseOneWayGrouping: 0
+  m_SurfaceArc: 180
+  m_UseSideFriction: 0
+  m_UseSideBounce: 0
+  m_SideArc: 1
 --- !u!1 &445949517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1653,8 +1673,8 @@ GameObject:
   - component: {fileID: 2013807361}
   - component: {fileID: 2013807360}
   - component: {fileID: 2013807362}
-  - component: {fileID: 2013807359}
   - component: {fileID: 2013807363}
+  - component: {fileID: 2013807359}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1677,7 +1697,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 2
+  m_GravityScale: 3
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -1861,9 +1881,10 @@ MonoBehaviour:
   mf_CrouchSpeed: 3
   mf_JumpForce: 450
   mf_JumpBufferTime: 0.15
-  mf_JumpAcceleration: 0
-  mf_JumpStart: 0
-  mf_JumpMax: 0
+  mf_JumpMaxTime: 0.1
+  mf_ApexMaxTime: 0.2
+  mf_ApexDelay: 0.2
+  mf_ApexGravMod: 0.9
   mf_CoyoteTime: 0.15
   m_PlayerInput: {fileID: 2013807359}
   m_PlatformController: {fileID: 2013807362}
@@ -1934,7 +1955,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCollider: {fileID: 2013807356}
-  playerController: {fileID: 0}
+  playerHead: {fileID: 372420006}
+  playerController: {fileID: 2013807360}
   collisionDowntime: 0.5
 --- !u!114 &2013807363
 MonoBehaviour:
