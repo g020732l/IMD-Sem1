@@ -167,45 +167,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    /*public void ForceGrounded(bool groundedState)
+    public void HaltLeft()
     {
-        isGrounded = groundedState;
-    }*/
 
-    /*public void ForceCrouch(float crouchTime)
-    {
-        mf_UncrouchDowntime = crouchTime;
-        c_RUncrouchDowntime = StartCoroutine(C_UncrouchDowntime());
-    }*/
+    }
 
-    /*public void PlayerJump(InputAction.CallbackContext context)
+    public void HaltRight()
     {
-        //Debug.Log("Jump pressed");
-        if (isGrounded && !isCrouching)
-        {
-            //Debug.Log("Jump Succeeded");
-            m_rb.velocity = Vector2.zero;
-            m_rb.AddForce(Vector2.up * mf_JumpForce);
-        }
-        else if (isGrounded && isCrouching)
-        {
-            Debug.Log("Crouch jumped");
-            m_PlatformController.PlayerCrouchJumped();
-        }
-        else if (!isGrounded || isCrouching)
-        {
-            if (c_RJumpBuffer != null)
-            {
-                c_RJumpBuffer = StartCoroutine(C_JumpBuffer());
-            }
-            else
-            {
-                StopCoroutine(C_JumpBuffer());
-                c_RJumpBuffer = null;
-                c_RJumpBuffer = StartCoroutine(C_JumpBuffer());
-            }
-        }
-    }*/
+
+    }
 
     void Handle_JumpPerformed(InputAction.CallbackContext context)
     {
