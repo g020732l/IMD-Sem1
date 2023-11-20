@@ -13,6 +13,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float mf_CrouchSpeed;
     //[SerializeField] AnimationCurve m_AnimationCurve;
     float mf_MoveSpeed;
+    bool leftFrozen;
+    bool rightFrozen;
     
     [SerializeField] float mf_JumpForce;
     [SerializeField] float mf_JumpBufferTime;
@@ -88,8 +90,22 @@ public class PlayerController : MonoBehaviour
     {
         //isGrounded = Physics2D.CircleCast(m_GroundCastPosition.position, mf_CircleRadius, Vector2.zero, 0, m_LayerMask);
         isGrounded = Physics2D.BoxCast(m_GroundCastPosition.position, new Vector2(mf_BoxWidth, mf_BoxHeight), 0.0f, Vector2.zero, 0.0f, m_LayerMask);
-
-        m_rb.velocity = new Vector2(mf_Axis * mf_MoveSpeed, m_rb.velocity.y);
+        m_StickyCrouch.UpdateGrounded(isGrounded);
+        
+        if (leftFrozen)
+        {
+            m_rb.velocity = new Vector2(Mathf.Clamp(mf_Axis, 0, 1) * mf_MoveSpeed, m_rb.velocity.y);
+        }
+        else if (rightFrozen)
+        {
+            m_rb.velocity = new Vector2(Mathf.Clamp(mf_Axis, -1, 0) * mf_MoveSpeed, m_rb.velocity.y);
+        }
+        else
+        {
+            {
+                m_rb.velocity = new Vector2(mf_Axis * mf_MoveSpeed, m_rb.velocity.y);
+            }
+        }
 
         //Physics.IgnoreLayerCollision(5, 7, (m_rb.velocity.y > 0.0f));
         if (mb_JumpHeld)
@@ -167,14 +183,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void HaltLeft()
+    public void UpdateLeftFrozen(bool leftFreezeState)
     {
-
+        leftFrozen = leftFreezeState;        
     }
 
-    public void HaltRight()
+    public void UpdateRightFrozen(bool rightFreezeState)
     {
-
+        rightFrozen = rightFreezeState;
     }
 
     void Handle_JumpPerformed(InputAction.CallbackContext context)
@@ -246,7 +262,7 @@ public class PlayerController : MonoBehaviour
     void Handle_CrouchPerformed(InputAction.CallbackContext context)
     {
         isCrouching = true;
-        //m_StickyCrouch.UpdateCrouching(isCrouching);
+        m_StickyCrouch.UpdateCrouching(isCrouching);
 
         if (c_RCrouch == null)
         {
@@ -263,7 +279,8 @@ public class PlayerController : MonoBehaviour
         if (!forcedCrouch)
         {
             isCrouching = false;
-            //m_StickyCrouch.UpdateCrouching(isCrouching);
+            m_StickyCrouch.UpdateCrouching(isCrouching);
+
             Debug.Log("uncrouching");
 
             if (c_RCrouch != null && !isUnderGeometry && !forcedCrouch)
@@ -344,22 +361,22 @@ public class PlayerController : MonoBehaviour
         yield break;
     }
 
-    IEnumerator C_UncrouchDowntime()
-    {
-        forcedCrouch = true;
-        Debug.Log("UncrouchDowntime active");
-        yield return new WaitForSeconds(mf_UncrouchDowntime);
-        forcedCrouch = false;
-        if (!forcedCrouch && !waitingToUncrouch && !m_Head.activeSelf)
-        {            
-            m_Head.SetActive(true);
-            mf_MoveSpeed = mf_BaseMoveSpeed;
+    //IEnumerator C_UncrouchDowntime()
+    //{
+    //    forcedCrouch = true;
+    //    Debug.Log("UncrouchDowntime active");
+    //    yield return new WaitForSeconds(mf_UncrouchDowntime);
+    //    forcedCrouch = false;
+    //    if (!forcedCrouch && !waitingToUncrouch && !m_Head.activeSelf)
+    //    {            
+    //        m_Head.SetActive(true);
+    //        mf_MoveSpeed = mf_BaseMoveSpeed;
 
-            if (c_RCrouch != null)
-            {
-                StopCoroutine(c_RCrouch);
-                c_RCrouch = null;
-            }
-        }
-    }
+    //        if (c_RCrouch != null)
+    //        {
+    //            StopCoroutine(c_RCrouch);
+    //            c_RCrouch = null;
+    //        }
+    //    }
+    //}
 }

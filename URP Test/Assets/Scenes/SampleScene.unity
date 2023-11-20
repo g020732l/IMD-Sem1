@@ -746,8 +746,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 445949517}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.01, y: -0.08, z: 0}
-  m_LocalScale: {x: 21.388, y: 10.465937, z: 1}
+  m_LocalPosition: {x: -0.0847, y: 1.0216, z: 0}
+  m_LocalScale: {x: 25.645739, y: 12.668423, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1009,7 +1009,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 6
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1304,7 +1304,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 719486542}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.25, y: -0.5, z: 0}
+  m_LocalPosition: {x: -0.3, y: -0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1335,7 +1335,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 972331288}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.25, y: -0.5, z: 0}
+  m_LocalPosition: {x: 0.3, y: -0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1493,8 +1493,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1231515102}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.01, y: -4.05, z: 0}
-  m_LocalScale: {x: 21.388, y: 3.9125, z: 1}
+  m_LocalPosition: {x: -0.0847, y: -4.5355, z: 0}
+  m_LocalScale: {x: 25.870022, y: 4.883399, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1548,6 +1548,13 @@ MonoBehaviour:
   m_CastPosLeft: {fileID: 719486543}
   m_CastPosRight: {fileID: 972331289}
   mf_CastLength: 0.04
+  leftGrounded: 0
+  rightGrounded: 0
+  isCrouching: 0
+  isGrounded: 0
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1 &1696016503
 GameObject:
   m_ObjectHideFlags: 0
@@ -1851,11 +1858,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ed0f86f617fa0c45ba7501c89f74eb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mf_BaseMoveSpeed: 5
-  mf_CrouchSpeed: 3
-  mf_JumpForce: 450
+  mf_BaseMoveSpeed: 6
+  mf_CrouchSpeed: 4
+  mf_JumpForce: 500
   mf_JumpBufferTime: 0.15
-  mf_JumpMaxTime: 0.1
+  mf_JumpMaxTime: 0.15
   mf_ApexMaxTime: 0.2
   mf_ApexDelay: 0.2
   mf_ApexGravMod: 0.9
@@ -1944,7 +1951,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9055a1ae6b54e7c419dcfe55523ad204, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_PlayerController: {fileID: 0}
-  m_CastPosLeft: {fileID: 0}
-  m_CastPosRight: {fileID: 0}
-  mf_CastLength: 0
+  m_PlayerController: {fileID: 2013807360}
+  m_CastPosLeft: {fileID: 719486543}
+  m_CastPosRight: {fileID: 972331289}
+  mf_CastLength: 0.075
+  leftGrounded: 0
+  rightGrounded: 0
+  isCrouching: 0
+  isGrounded: 0
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 64
